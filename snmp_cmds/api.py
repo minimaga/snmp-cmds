@@ -21,18 +21,20 @@ class Session(object):
                  port: OneOf[str, int] = 161,
                  read_community: str = 'public',
                  write_community: str = 'private',
-                 timeout: OneOf[int, str] = 3):
+                 timeout: OneOf[int, str] = 3,
+                 version: str = '2c'):
         self.ipaddress = ipaddress
         self.port = port
         self.read_community = read_community
         self.write_community = write_community
         self.timeout = timeout
+        self.version = version
 
     def get(self, oid: str) -> Optional[str]:
         """
         A simple convenience wrapper around :func:`~snmp_cmds.commands.snmpget`
 
-        Runs the equivalent of '``snmpget -Oqv -Pe -t {timeout} -r 0 -v 2c 
+        Runs the equivalent of '``snmpget -Oqv -Pe -t {timeout} -r 0 -v {version}
         -c {community} {host} {oid}``' and parses the result. if the 
         response from the server is a ``No Such Object`` or a 
         ``No Such Instance`` error, this function returns :obj:`None`. 
@@ -51,7 +53,8 @@ class Session(object):
             Net-SNMP command produces an unknown or unhandled error
         """
         return snmpget(ipaddress=self.ipaddress, port=self.port, oid=oid,
-                       community=self.read_community, timeout=self.timeout)
+                       community=self.read_community, timeout=self.timeout,
+                       version=self.version)
 
     def get_some(self, oids: List[str]) -> Optional[List[Tuple[str, str]]]:
         """
@@ -72,7 +75,8 @@ class Session(object):
             Net-SNMP command produces an unknown or unhandled error
         """
         return snmpgetsome(ipaddress=self.ipaddress, port=self.port, oids=oids,
-                           community=self.read_community, timeout=self.timeout)
+                           community=self.read_community, timeout=self.timeout,
+                           version=self.version)
 
     def get_table(self, oid: str, sortkey: Optional[str] = None
                   ) -> OneOf[List[Dict[str, str]], Dict[str, Dict[str, str]]]:
@@ -100,7 +104,7 @@ class Session(object):
         """
         return snmptable(ipaddress=self.ipaddress, port=self.port, oid=oid,
                          community=self.read_community, timeout=self.timeout,
-                         sortkey=sortkey)
+                         sortkey=sortkey, version=self.version)
 
     def walk(self, oid: str) -> Optional[List[Tuple[str, str]]]:
         """
@@ -120,7 +124,8 @@ class Session(object):
             Net-SNMP command produces an unknown or unhandled error
         """
         return snmpwalk(ipaddress=self.ipaddress, port=self.port, oid=oid,
-                        community=self.read_community, timeout=self.timeout)
+                        community=self.read_community, timeout=self.timeout,
+                        version=self.version)
 
     def set(self, oid: str, value_type: str, value: str) -> str:
         """
@@ -148,4 +153,4 @@ class Session(object):
         """
         return snmpset(ipaddress=self.ipaddress, port=self.port, oid=oid,
                        community=self.write_community, timeout=self.timeout,
-                       value_type=value_type, value=value)
+                       value_type=value_type, value=value, version=self.version)

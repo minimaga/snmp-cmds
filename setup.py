@@ -5,7 +5,7 @@ with open('README.rst') as file:
 
 setup(
     name='snmp-cmds',
-    version='1.0',
+    version='1.1',
     description='A python wrapper around the Net-SNMP command line utilities',
     long_description=long_description,
     url='https://github.com/alextremblay/snmp-cmds',

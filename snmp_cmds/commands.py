@@ -21,13 +21,14 @@ from .helpers import validate_ip_address, check_for_timeout, \
 
 
 def snmpget(ipaddress: str, oid: str, community: str = 'public',
-            port: OneOf[int, str] = 161, timeout: OneOf[int, str] = 3
+            port: OneOf[int, str] = 161, timeout: OneOf[int, str] = 3,
+            version: str = '2c'
             ) -> Optional[str]:
     """
     Wrapper around Net-SNMP's ``snmpget`` command
     
     Runs the equivalent of 
-    '``snmpget -Oqv -Pe -t {timeout} -r 0 -v 2c -c {community} {host} {oid}``' 
+    '``snmpget -Oqv -Pe -t {timeout} -r 0 -v {version} -c {community} {host} {oid}``'
     and parses the result. if the response from the server is a 
     ``No Such Object`` or a ``No Such Instance`` error, this function returns 
     :obj:`None`. Otherwise, it returns the value retrieved from the server
@@ -37,7 +38,8 @@ def snmpget(ipaddress: str, oid: str, community: str = 'public',
     :param oid: the Object IDentifier to request from the target SNMP server
     :param port: the port on which SNMP is running on the target server
     :param timeout: the number of seconds to wait for a response from the 
-        SNMP server  
+        SNMP server
+    :param version: the version of the SNMP protocol
     :return: the value stored at that OID on the target SNMP server if 
         successful, :obj:`None` otherwise
     :raises `~snmp_cmds.exceptions.SNMPTimeout`: if the target SNMP server 
@@ -51,7 +53,7 @@ def snmpget(ipaddress: str, oid: str, community: str = 'public',
     host = '{}:{}'.format(ipaddress, port)
 
     cmdargs = [
-        'snmpget', '-Oqv', '-Pe', '-t', str(timeout), '-r', '0', '-v', '2c',
+        'snmpget', '-Oqv', '-Pe', '-t', str(timeout), '-r', '0', '-v', version,
         '-c', community, host, oid]
 
     cmd = run(cmdargs, stdout=PIPE, stderr=PIPE)
@@ -77,7 +79,8 @@ def snmpget(ipaddress: str, oid: str, community: str = 'public',
 
 
 def snmpgetsome(ipaddress: str, oids: List[str], community: str = 'public',
-                port: OneOf[str, int] = 161, timeout: OneOf[int, str] = 3
+                port: OneOf[str, int] = 161, timeout: OneOf[int, str] = 3,
+                version: str = '2c'
                 ) -> List[Tuple[str, str]]:
     """
     Warpper around Net-SNMP's 
@@ -91,7 +94,8 @@ def snmpgetsome(ipaddress: str, oids: List[str], community: str = 'public',
         SNMP server
     :param port: the port on which SNMP is running on the target server
     :param timeout: the number of seconds to wait for a response from the 
-        SNMP server 
+        SNMP server
+    :param version: the version of the SNMP protocol
     :return: a list of tuples of the form (oid, result)
     :raises `~snmp_cmds.exceptions.SNMPTimeout`: if the target SNMP 
         server 
@@ -108,7 +112,7 @@ def snmpgetsome(ipaddress: str, oids: List[str], community: str = 'public',
         oids = [oids]
 
     cmdargs = [
-        'snmpget', '-OQfn', '-Pe', '-t', str(timeout), '-r', '0', '-v', '2c',
+        'snmpget', '-OQfn', '-Pe', '-t', str(timeout), '-r', '0', '-v', version,
         '-c', community, host, *oids
     ]
 
@@ -162,7 +166,8 @@ def snmpgetsome(ipaddress: str, oids: List[str], community: str = 'public',
 
 
 def snmpwalk(ipaddress: str, oid: str, community: str = 'public',
-             port: OneOf[str, int] = 161, timeout: int = 3
+             port: OneOf[str, int] = 161, timeout: int = 3,
+             version: str = '2c'
              ) -> List[Tuple[str, str]]:
     """
     Runs Net-SNMP's 'snmpget' command on a list of OIDs, and returns a list 
@@ -173,7 +178,8 @@ def snmpwalk(ipaddress: str, oid: str, community: str = 'public',
     :param oid: the Object IDentifier to request from the target SNMP server
     :param port: the port on which SNMP is running on the target server
     :param timeout: the number of seconds to wait for a response from the 
-        SNMP server 
+        SNMP server
+    :param version: the version of the SNMP protocol
     :return: a list of tuples of the form (oid, result)
     :raises `~snmp_cmds.exceptions.SNMPTimeout`: if the target SNMP server 
         fails to respond
@@ -186,7 +192,7 @@ def snmpwalk(ipaddress: str, oid: str, community: str = 'public',
     host = '{}:{}'.format(ipaddress, port)
 
     cmdargs = [
-        'snmpwalk', '-OQfn', '-Pe', '-t', str(timeout), '-r', '0', '-v', '2c',
+        'snmpwalk', '-OQfn', '-Pe', '-t', str(timeout), '-r', '0', '-v', version,
         '-c', community, host, oid
     ]
 
@@ -241,7 +247,7 @@ def snmpwalk(ipaddress: str, oid: str, community: str = 'public',
 
 def snmptable(ipaddress: str, oid: str, community: str = 'public',
               port: OneOf[str, int] = 161, timeout: int = 3,
-              sortkey: Optional[str] = None
+              sortkey: Optional[str] = None, version: str = '2c'
               ) -> OneOf[List[Dict[str, str]], Dict[str, Dict[str, str]]]:
     """
     Runs Net-SNMP's 'snmptable' command on a given OID, converts the results
@@ -255,6 +261,7 @@ def snmptable(ipaddress: str, oid: str, community: str = 'public',
         results
     :param timeout: the number of seconds to wait for a response from the 
         SNMP server
+    :param version: the version of the SNMP protocol
     :return: a list of dicts, one for each row of the table. The keys of the 
         dicts correspond to the column names of the table.
     :raises `~snmp_cmds.exceptions.SNMPTimeout`: if the target SNMP server 
@@ -276,7 +283,7 @@ def snmptable(ipaddress: str, oid: str, community: str = 'public',
 
     cmdargs = [
         'snmptable', '-m', 'ALL', '-Pe', '-t', str(timeout), '-r', '0', '-v',
-        '2c', '-Cif', delimiter, '-c', community, host, oid
+        version, '-Cif', delimiter, '-c', community, host, oid
     ]
 
     cmd = run(cmdargs, stdout=PIPE, stderr=PIPE)
@@ -309,7 +316,7 @@ def snmptable(ipaddress: str, oid: str, community: str = 'public',
 
 def snmpset(ipaddress: str, oid: str, value_type: str, value: str,
             community: str = 'private', port: OneOf[int, str] = 161,
-            timeout: OneOf[int, str] = 3
+            timeout: OneOf[int, str] = 3, version: str = '2c'
             ) -> str:
     """
     Runs Net-SNMP's 'snmpset' command on a given OID, and returns the result 
@@ -323,7 +330,8 @@ def snmpset(ipaddress: str, oid: str, value_type: str, value: str,
     :param value: the value to set
     :param port: the port on which SNMP is running on the target server
     :param timeout: the number of seconds to wait for a response from the 
-        SNMP server  
+        SNMP server
+    :param version: the version of the SNMP protocol
     :return: the value that was set on the SNMP target
     :raises `~snmp_cmds.exceptions.SNMPTimeout`: if the target SNMP server 
         fails to respond
@@ -354,7 +362,7 @@ def snmpset(ipaddress: str, oid: str, value_type: str, value: str,
         )
 
     cmdargs = [
-        'snmpset', '-OQfn', '-t', str(timeout), '-r', '0', '-v', '2c', '-c',
+        'snmpset', '-OQfn', '-t', str(timeout), '-r', '0', '-v', version, '-c',
         community, host, oid, value_type, value]
 
     cmd = run(cmdargs, stdout=PIPE, stderr=PIPE)
